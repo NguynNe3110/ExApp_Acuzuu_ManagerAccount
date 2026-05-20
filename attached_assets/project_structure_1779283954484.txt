@@ -1,0 +1,66 @@
+com.example.app
+│
+├── core
+│   ├── di
+│   │   ├── AppContainer.kt
+│   │
+│   ├── dispatcher
+│   ├── extension
+│   ├── result
+│   ├── ui
+│   └── MyApp.kt
+│
+├── data
+│   ├── local
+│   │   ├── dao
+│   │   ├── datasource
+│   │   ├── entity
+│   │   └── AppDatabase.kt
+│   │
+│   ├── remote
+│   │   ├── api
+│   │   ├── datasource
+│   │   ├── dto
+│   │   │   ├── request
+│   │   │   ├── response
+│   │   │   └── BaseResponseDto.kt
+│   │   ├── AuthInterceptor.kt
+│   │   └── RetrofitProvider.kt
+│   │
+│   ├── mapper
+│   ├── repository   // implement
+│   └── session
+│
+├── domain
+│   ├── model
+│   ├── repository   // interface
+│   └── usecase
+│
+├── feature
+│   ├── main
+│   │   └── MainFragment.kt
+│   │
+│   ├── auth
+│   │   ├── login
+│   │   │   ├── LoginViewModel.kt
+│   │   │   ├── LoginFragment.kt
+│   │   │   ├── LoginUiState.kt
+│   │   │   ├── LoginUiEvent.kt
+│   │   ├── register
+│   │   │   ├── RegisterViewModel.kt
+│   │   │   ├── RegisterFragment.kt
+│   │   │   ├── RegisterUiState.kt
+│   │   │   ├── RegisterUiEvent.kt
+│   │
+│   ├── home
+│   │   ├── HomeViewModel.kt
+│   │   ├── HomeFragment.kt
+│   │   ├── HomeUiState.kt
+│   │   └── HomeUiEvent.kt
+│   │
+│   ├── MainActivity.kt
+│   │
+├── ui
+│   ├── adapter
+│   ├── component
+│   └── dialog

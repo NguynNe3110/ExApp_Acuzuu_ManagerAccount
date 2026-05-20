@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "350141372903",
+    "project_id": "acuzuu",
+    "storage_bucket": "acuzuu.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:350141372903:android:51c1cbab02f3b5efb58542",
+        "android_client_info": {
+          "package_name": "com.example.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBgeTPShymxC52T3oL36lBPhl_RY9E8o6I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
