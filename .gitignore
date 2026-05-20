@@ -1,21 +1,25 @@
-node_modules
-dist
-.DS_Store
-server/public
-vite.config.ts.*
-*.tar.gz
-
-
-# Local config
-local.properties
-
+```
 # Gradle
 .gradle/
 build/
+!gradle/wrapper/gradle-wrapper.jar
 
-# Android Studio
-.idea/
-*.iml
+# Android
+*.apk
+*.aar
+*.ap_
+!android/**/gradle-wrapper.properties
 
-# Local AI/tool cache
-.local/
+# Temporary files
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local configuration
+local.properties
+```

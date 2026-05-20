@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)           // Hilt DI
     alias(libs.plugins.ksp)            // KSP cho Room & Hilt
-    kotlin("plugin.serialization")     // Kotlinx Serialization
+    alias(libs.plugins.kotlin.serialization)     // Kotlinx Serialization
 }
 
 android {
