@@ -1,92 +1,140 @@
-# Cấu trúc dự án Android — Acuzu App
+# Cấu trúc dự án Android — Acuzu (App quản lý tài khoản)
+
+## Màn hình
+
+| Màn hình | File | Mô tả |
+|---|---|---|
+| Login | `feature/auth/login/LoginScreen.kt` | Username + Password + social login |
+| Register | `feature/auth/register/RegisterScreen.kt` | Đăng ký tài khoản mới |
+| Home | `feature/home/HomeScreen.kt` | Grid/List danh mục + FAB + dark mode |
+| Category Detail | `feature/category/CategoryDetailScreen.kt` | Danh sách accounts trong 1 category |
+| Account Detail | `feature/account/AccountDetailScreen.kt` | Chi tiết tài khoản + custom fields |
+| My Profile | `feature/profile/ProfileScreen.kt` | Hồ sơ + logout + thiết lập mức độ |
+| Edit Profile | `feature/profile/EditProfileScreen.kt` | Chỉnh sửa thông tin cá nhân |
+
+## Cấu trúc thư mục
 
 ```
 android/app/src/main/java/com/example/app/
 │
-├── core/                          # Dùng chung toàn app
+├── core/
 │   ├── di/
-│   │   ├── AppModule.kt           # Bind DispatcherProvider
-│   │   ├── NetworkModule.kt       # Cung cấp Retrofit, API instances
-│   │   └── RepositoryModule.kt    # Bind interface → implementation
+│   │   ├── AppModule.kt           # DispatcherProvider binding
+│   │   ├── NetworkModule.kt       # Retrofit + API instances
+│   │   └── RepositoryModule.kt    # Interface → Implementation binding
 │   ├── dispatcher/
-│   │   └── DispatcherProvider.kt  # Quản lý coroutine dispatchers (testable)
+│   │   └── DispatcherProvider.kt  # Coroutine dispatchers (testable)
 │   ├── extension/
 │   │   └── FlowExtensions.kt      # Flow.asResult() helper
 │   ├── result/
-│   │   └── Result.kt              # Sealed class: Success / Error / Loading
+│   │   └── Result.kt              # Sealed: Success / Error / Loading
 │   ├── ui/
-│   │   └── Theme.kt               # Material3 theme
-│   └── MyApp.kt                   # @HiltAndroidApp Application class
+│   │   └── Theme.kt               # Material3 theme + màu Figma
+│   └── MyApp.kt                   # @HiltAndroidApp entry point
 │
-├── data/                          # Tầng data — biết về network/DB
+├── data/
 │   ├── local/
-│   │   ├── dao/
-│   │   │   └── ServiceProviderDao.kt      # Room queries
-│   │   ├── entity/
-│   │   │   └── ServiceProviderEntity.kt   # Room table
-│   │   └── AppDatabase.kt                 # RoomDatabase
+│   │   ├── dao/ServiceProviderDao.kt
+│   │   ├── entity/ServiceProviderEntity.kt
+│   │   └── AppDatabase.kt
 │   ├── remote/
-│   │   ├── api/
-│   │   │   ├── AuthApi.kt                 # Retrofit endpoints auth
-│   │   │   └── ServiceProviderApi.kt      # Retrofit endpoints providers
-│   │   ├── dto/
-│   │   │   ├── request/
-│   │   │   │   └── LoginRequestDto.kt
-│   │   │   ├── response/
-│   │   │   │   ├── LoginResponseDto.kt
-│   │   │   │   └── ServiceProviderDto.kt
-│   │   │   └── BaseResponseDto.kt         # Wrapper chung
-│   │   ├── AuthInterceptor.kt             # Tự đính Bearer token
-│   │   └── RetrofitProvider.kt            # Cấu hình OkHttp + Retrofit
+│   │   ├── api/AuthApi.kt
+│   │   ├── api/ServiceProviderApi.kt
+│   │   ├── api/RecipeApi.kt
+│   │   ├── dto/BaseResponseDto.kt
+│   │   ├── dto/request/LoginRequestDto.kt
+│   │   ├── dto/response/LoginResponseDto.kt
+│   │   ├── dto/response/ServiceProviderDto.kt
+│   │   ├── dto/response/RecipeDto.kt
+│   │   ├── AuthInterceptor.kt     # Auto-attach Bearer token
+│   │   └── RetrofitProvider.kt    # OkHttp + Retrofit config
 │   ├── mapper/
-│   │   ├── ServiceProviderMapper.kt       # DTO → Domain Model
-│   │   └── UserMapper.kt
+│   │   ├── ServiceProviderMapper.kt
+│   │   ├── UserMapper.kt
+│   │   └── RecipeMapper.kt
 │   ├── repository/
-│   │   ├── AuthRepositoryImpl.kt          # Implementation auth
+│   │   ├── AuthRepositoryImpl.kt
 │   │   └── ServiceProviderRepositoryImpl.kt
 │   └── session/
-│       └── SessionManager.kt              # DataStore: lưu token
+│       └── SessionManager.kt      # DataStore token storage
 │
-├── domain/                        # Tầng domain — pure Kotlin, không Android
+├── domain/
 │   ├── model/
-│   │   ├── ServiceProvider.kt     # Domain model
+│   │   ├── Account.kt             # Account, Category, PasswordLevel, CustomField
+│   │   ├── UserProfile.kt         # Hồ sơ người dùng
+│   │   ├── ServiceProvider.kt
 │   │   └── User.kt
 │   ├── repository/
-│   │   ├── AuthRepository.kt      # Interface (không biết impl)
-│   │   └── ServiceProviderRepository.kt
+│   │   ├── AuthRepository.kt
+│   │   ├── ServiceProviderRepository.kt
+│   │   └── RecipeRepository.kt
 │   └── usecase/
-│       ├── GetProvidersUseCase.kt  # Sort featured + pagination
-│       └── LoginUseCase.kt         # Validate + login
+│       ├── GetProvidersUseCase.kt
+│       └── LoginUseCase.kt
 │
-└── feature/                       # Tính năng — UI + ViewModel
-    ├── auth/
-    │   └── login/
-    │       ├── LoginScreen.kt      # @Composable UI
-    │       ├── LoginViewModel.kt   # @HiltViewModel
-    │       ├── LoginUiState.kt     # data class state
-    │       └── LoginUiEvent.kt     # sealed class events
-    ├── home/
-    │   ├── HomeScreen.kt
-    │   ├── HomeViewModel.kt
-    │   ├── HomeUiState.kt
-    │   └── HomeUiEvent.kt
-    └── main/
-        ├── MainActivity.kt         # Single Activity entry point
-        └── navigation/
-            └── AppNavGraph.kt      # NavHost + routes
+├── feature/
+│   ├── auth/
+│   │   ├── login/
+│   │   │   ├── LoginScreen.kt      ← Màn hình Login
+│   │   │   ├── LoginViewModel.kt
+│   │   │   ├── LoginUiState.kt
+│   │   │   └── LoginUiEvent.kt
+│   │   └── register/
+│   │       ├── RegisterScreen.kt   ← Màn hình Register
+│   │       ├── RegisterUiState.kt
+│   │       └── RegisterUiEvent.kt
+│   ├── home/
+│   │   ├── HomeScreen.kt           ← Grid/List + FAB + dark mode
+│   │   ├── HomeViewModel.kt
+│   │   ├── HomeUiState.kt
+│   │   └── HomeUiEvent.kt
+│   ├── category/
+│   │   └── CategoryDetailScreen.kt ← Danh sách accounts
+│   ├── account/
+│   │   └── AccountDetailScreen.kt  ← Chi tiết + edit fields
+│   ├── profile/
+│   │   ├── ProfileScreen.kt        ← My profile
+│   │   └── EditProfileScreen.kt    ← Edit profile
+│   └── main/
+│       ├── MainActivity.kt
+│       └── navigation/AppNavGraph.kt  ← Routes + navigation
+│
+└── ui/
+    ├── component/
+    │   ├── PasswordStrengthIndicator.kt  ← Thanh chỉ báo mức mật khẩu
+    │   └── AcuzuDialog.kt               ← Các dialog dùng chung
+    └── adapter/
 ```
 
-## Nguyên tắc phụ thuộc (Dependency Rule)
+## Navigation Flow
 
 ```
-UI (feature)
-    ↓ phụ thuộc vào
-Domain (model, repository interface, usecase)
-    ↑ KHÔNG biết đến
-Data (repository impl, api, dto, room)
+Login ──────────────────────────────► Home
+  │                                     │
+  └──► Register ──────────────────►    │
+                                        ├──► Category Detail ──► Account Detail
+                                        │
+                                        └──► Personal ──────────► Edit Profile
 ```
 
-- `feature` biết `domain`, KHÔNG biết `data`  
-- `data` biết `domain`, KHÔNG biết `feature`  
-- `domain` KHÔNG biết ai cả (pure Kotlin)  
-- `core` được dùng bởi tất cả các tầng
+## Màu sắc (từ Figma)
+
+| Tên | Hex | Dùng cho |
+|---|---|---|
+| BluePrimary | `#29B6F6` | Nút Login/Save, FAB |
+| RedPrimary | `#E53935` | Edit profile, Log out |
+| GreenLight | `#F5F8EE` | Card background Google |
+| BlueLight | `#E3F8FF` | Card background Facebook |
+| StrengthGreen | `#4CAF50` | Mức mật khẩu mạnh |
+| StrengthYellow | `#FFEB3B` | Mức trung bình |
+| StrengthRed | `#F44336` | Mức yếu |
+
+## Password Strength Indicator
+
+```
+┌──┐  ← Mức 4 (xanh)
+├──┤  ← Mức 3 (vàng)
+├──┤  ← Mức 2 (cam)
+└──┘  ← Mức 1 (đỏ)
+```
+Mức càng cao → càng nhiều đoạn có màu (từ dưới lên)

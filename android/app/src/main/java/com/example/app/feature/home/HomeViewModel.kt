@@ -2,159 +2,145 @@ package com.example.app.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.app.core.result.Result
-import com.example.app.domain.usecase.GetProvidersUseCase
+import com.example.app.domain.model.Account
+import com.example.app.domain.model.AccountType
+import com.example.app.domain.model.Category
+import com.example.app.domain.model.PasswordLevel
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 // ─────────────────────────────────────────────────────────────
-// HomeViewModel.kt
-//
-// ViewModel chịu trách nhiệm:
-//   1. Giữ UiState (sống qua screen rotation)
-//   2. Xử lý user actions (loadProviders, search, ...)
-//   3. Giao tiếp với UseCase/Repository
-//   4. KHÔNG biết gì về Compose hay View
-//
-// Flow dữ liệu:
-//   UseCase → Result<T> → ViewModel xử lý → update UiState → UI recompose
+// HomeViewModel.kt — Quản lý state màn hình Home
 // ─────────────────────────────────────────────────────────────
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val getProvidersUseCase: GetProvidersUseCase
-) : ViewModel() {
+class HomeViewModel @Inject constructor() : ViewModel() {
 
-    // ── UiState: dùng StateFlow để Compose collect ────────────
-    // MutableStateFlow: internal (chỉ ViewModel thay đổi được)
     private val _uiState = MutableStateFlow(HomeUiState())
-    // StateFlow: expose ra ngoài (UI chỉ đọc)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
-    // ── UiEvent: Channel đảm bảo event chỉ consume 1 lần ──────
     private val _events = Channel<HomeUiEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
-    // ── Search query flow để debounce ──────────────────────────
-    private val searchQueryFlow = MutableStateFlow("")
-
     init {
-        loadProviders()
-        observeSearch()
+        loadCategories()
     }
 
-    // ── Load providers lần đầu ─────────────────────────────────
-
-    fun loadProviders(category: String? = null) {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, errorMessage = null) }
-
-            when (val result = getProvidersUseCase(page = 1, category = category)) {
-                is Result.Success -> {
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            providers = result.data,
-                            currentPage = 1
-                        )
-                    }
-                }
-                is Result.Error -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, errorMessage = result.message)
-                    }
-                    _events.send(HomeUiEvent.ShowSnackbar(result.message))
-                }
-                is Result.Loading -> Unit // Không xảy ra ở đây
-            }
-        }
-    }
-
-    // ── Load thêm trang (pagination) ───────────────────────────
-
-    fun loadMore() {
-        val state = _uiState.value
-        if (state.isLoadingMore || !state.hasMorePages) return
-
-        viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingMore = true) }
-
-            val nextPage = state.currentPage + 1
-            when (val result = getProvidersUseCase(page = nextPage)) {
-                is Result.Success -> {
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            isLoadingMore = false,
-                            providers = currentState.providers + result.data, // Append vào list cũ
-                            currentPage = nextPage,
-                            hasMorePages = result.data.isNotEmpty()
-                        )
-                    }
-                }
-                is Result.Error -> {
-                    _uiState.update { it.copy(isLoadingMore = false) }
-                    _events.send(HomeUiEvent.ShowSnackbar(result.message))
-                }
-                is Result.Loading -> Unit
-            }
-        }
-    }
-
-    // ── Xử lý search với debounce ──────────────────────────────
-
-    fun onSearchQueryChange(query: String) {
-        // Cập nhật state để UI hiện text đang gõ ngay lập tức
-        _uiState.update { it.copy(searchQuery = query) }
-        // Gửi vào flow để debounce (không gọi API mỗi lần gõ)
-        searchQueryFlow.value = query
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun observeSearch() {
-        viewModelScope.launch {
-            searchQueryFlow
-                .debounce(400)          // Chờ 400ms sau lần gõ cuối mới search
-                .distinctUntilChanged() // Không search lại nếu query giống nhau
-                .collect { query ->
-                    if (query.isBlank()) {
-                        loadProviders() // Quay về danh sách gốc
-                    } else {
-                        performSearch(query)
-                    }
-                }
-        }
-    }
-
-    private suspend fun performSearch(query: String) {
-        _uiState.update { it.copy(isLoading = true) }
-        // Search logic có thể mở rộng thêm ở đây
-        loadProviders()
+    // ── Mock data — thay bằng Repository sau ──────────────────
+    private fun loadCategories() {
+        val mockAccounts = listOf(
+            Account(1, "nguyen12112005@gmail.com", PasswordLevel.LEVEL_3),
+            Account(2, "nguyen12112005nguyen@gmail.co...", PasswordLevel.LEVEL_2),
+            Account(3, "0329223075", PasswordLevel.LEVEL_4),
+        )
+        val mockCategories = listOf(
+            Category(1, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+            Category(2, "Facebook", "https://logo.clearbit.com/facebook.com",  mockAccounts),
+            Category(3, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+            Category(4, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+            Category(5, "Facebook", "https://logo.clearbit.com/facebook.com",  mockAccounts),
+            Category(6, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+            Category(7, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+            Category(8, "Facebook", "https://logo.clearbit.com/facebook.com",  mockAccounts),
+            Category(9, "Google",   "https://logo.clearbit.com/google.com",   mockAccounts),
+        )
+        _uiState.update { it.copy(categories = mockCategories) }
     }
 
     // ── User actions ───────────────────────────────────────────
 
-    fun onProviderClick(providerId: Int) {
+    fun onSearchQueryChange(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+    }
+
+    fun onToggleDarkMode() {
+        _uiState.update { it.copy(isDarkMode = !it.isDarkMode) }
+    }
+
+    fun onToggleViewMenu() {
+        _uiState.update { it.copy(isViewMenuOpen = !it.isViewMenuOpen, isFabExpanded = false) }
+    }
+
+    fun onSelectViewMode(mode: ViewMode) {
+        _uiState.update { it.copy(viewMode = mode, isViewMenuOpen = false) }
+    }
+
+    fun onToggleFab() {
+        _uiState.update { it.copy(isFabExpanded = !it.isFabExpanded, isViewMenuOpen = false) }
+    }
+
+    fun onDismissFab() {
+        _uiState.update { it.copy(isFabExpanded = false) }
+    }
+
+    fun onAddAccountClick() {
+        _uiState.update { it.copy(isFabExpanded = false, showAddAccountDialog = true) }
+    }
+
+    fun onAddCategoryClick() {
+        _uiState.update { it.copy(isFabExpanded = false, showAddCategoryDialog = true) }
+    }
+
+    fun onDismissDialogs() {
+        _uiState.update { it.copy(showAddAccountDialog = false, showAddCategoryDialog = false) }
+    }
+
+    fun onSaveNewAccount(name: String, type: AccountType, level: PasswordLevel) {
         viewModelScope.launch {
-            _events.send(HomeUiEvent.NavigateToDetail(providerId))
+            // Tìm hoặc tạo category theo type
+            val existing = _uiState.value.categories.firstOrNull { it.name == type.label }
+            val newAccount = Account(
+                id            = System.currentTimeMillis().toInt(),
+                displayName   = name,
+                passwordLevel = level
+            )
+            if (existing != null) {
+                val updated = _uiState.value.categories.map { cat ->
+                    if (cat.id == existing.id) cat.copy(accounts = cat.accounts + newAccount)
+                    else cat
+                }
+                _uiState.update { it.copy(categories = updated, showAddAccountDialog = false) }
+            } else {
+                val newCat = Category(
+                    id       = System.currentTimeMillis().toInt(),
+                    name     = type.label,
+                    logoUrl  = null,
+                    accounts = listOf(newAccount)
+                )
+                _uiState.update { it.copy(
+                    categories = it.categories + newCat,
+                    showAddAccountDialog = false
+                )}
+            }
+            _events.send(HomeUiEvent.ShowSnackbar("Đã thêm tài khoản"))
         }
     }
 
-    fun onCategorySelect(category: String?) {
-        _uiState.update { it.copy(selectedCategory = category) }
-        loadProviders(category = category)
+    fun onSaveNewCategory(name: String) {
+        viewModelScope.launch {
+            val newCat = Category(
+                id      = System.currentTimeMillis().toInt(),
+                name    = name,
+                logoUrl = null
+            )
+            _uiState.update { it.copy(
+                categories = it.categories + newCat,
+                showAddCategoryDialog = false
+            )}
+            _events.send(HomeUiEvent.ShowSnackbar("Đã thêm thư mục \"$name\""))
+        }
     }
 
-    fun onRetry() {
-        loadProviders()
+    fun onCategoryClick(categoryId: Int) {
+        viewModelScope.launch {
+            _events.send(HomeUiEvent.NavigateToCategoryDetail(categoryId))
+        }
     }
 }

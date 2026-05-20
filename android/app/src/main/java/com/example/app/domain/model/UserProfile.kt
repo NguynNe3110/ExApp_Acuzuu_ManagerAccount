@@ -1,10 +1,12 @@
-package com.example.app.feature.home
+package com.example.app.domain.model
 
 // ─────────────────────────────────────────────────────────────
-// HomeUiEvent.kt — Sự kiện 1 lần từ HomeViewModel
+// UserProfile.kt — Hồ sơ người dùng
 // ─────────────────────────────────────────────────────────────
 
-sealed class HomeUiEvent {
-    data class NavigateToCategoryDetail(val categoryId: Int) : HomeUiEvent()
-    data class ShowSnackbar(val message: String) : HomeUiEvent()
-}
+data class UserProfile(
+    val id: Int,
+    val username: String,          // "Uzuu of kings"
+    val avatarUrl: String?,
+    val maxPasswordLevel: PasswordLevel = PasswordLevel.LEVEL_3
+)
