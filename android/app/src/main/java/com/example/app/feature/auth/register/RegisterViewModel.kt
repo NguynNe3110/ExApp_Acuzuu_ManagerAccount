@@ -2,6 +2,7 @@ package com.example.app.feature.auth.register
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import com.example.app.core.result.Result
 import com.example.app.domain.usecase.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,8 @@ import javax.inject.Inject
 class RegisterViewModel @Inject constructor(
     private val registerUseCase: RegisterUseCase
 ) : ViewModel() {
+
+    private val logTag = "RegisterViewModel"
 
     private val _uiState = MutableStateFlow(RegisterUiState())
     val uiState: StateFlow<RegisterUiState> = _uiState.asStateFlow()
@@ -48,25 +51,30 @@ class RegisterViewModel @Inject constructor(
     fun onRegisterClick() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            when (
-                val result = registerUseCase(
-                    uiState.value.name,
-                    uiState.value.email,
-                    uiState.value.password,
-                    uiState.value.confirmPassword
-                )
-            ) {
-                is Result.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(RegisterUiEvent.NavigateToHome)
+            Log.d(logTag, "Register start for email=${uiState.value.email}")
+            try {
+                when (
+                    val result = registerUseCase(
+                        uiState.value.name,
+                        uiState.value.email,
+                        uiState.value.password,
+                        uiState.value.confirmPassword
+                    )
+                ) {
+                    is Result.Success -> {
+                        Log.d(logTag, "Register success")
+                        _events.send(RegisterUiEvent.NavigateToHome)
+                    }
+                    is Result.Error -> {
+                        Log.w(logTag, "Register error: ${result.message}")
+                        _events.send(RegisterUiEvent.ShowError(result.message))
+                    }
+                    is Result.Loading -> {
+                        Log.d(logTag, "Register loading")
+                    }
                 }
-                is Result.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(RegisterUiEvent.ShowError(result.message))
-                }
-                is Result.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-+                }
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

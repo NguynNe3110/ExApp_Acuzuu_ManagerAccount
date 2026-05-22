@@ -2,6 +2,7 @@ package com.example.app.feature.auth.login
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import android.util.Log
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,6 +23,8 @@ import javax.inject.Inject
 class LoginViewModel @Inject constructor(
     private val loginUseCase: LoginUseCase
 ) : ViewModel() {
+
+    private val logTag = "LoginViewModel"
 
     private val _uiState = MutableStateFlow(LoginUiState())
     val uiState: StateFlow<LoginUiState> = _uiState.asStateFlow()
@@ -44,18 +47,23 @@ class LoginViewModel @Inject constructor(
     fun onLoginClick() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            when (val result = loginUseCase(uiState.value.email, uiState.value.password)) {
-                is Result.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(LoginUiEvent.NavigateToHome)
+            Log.d(logTag, "Login start for email=${uiState.value.email}")
+            try {
+                when (val result = loginUseCase(uiState.value.email, uiState.value.password)) {
+                    is Result.Success -> {
+                        Log.d(logTag, "Login success")
+                        _events.send(LoginUiEvent.NavigateToHome)
+                    }
+                    is Result.Error -> {
+                        Log.w(logTag, "Login error: ${result.message}")
+                        _events.send(LoginUiEvent.ShowError(result.message))
+                    }
+                    is Result.Loading -> {
+                        Log.d(logTag, "Login loading")
+                    }
                 }
-                is Result.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _events.send(LoginUiEvent.ShowError(result.message))
-                }
-                is Result.Loading -> {
-                    _uiState.update { it.copy(isLoading = true) }
-                }
+            } finally {
+                _uiState.update { it.copy(isLoading = false) }
             }
         }
     }

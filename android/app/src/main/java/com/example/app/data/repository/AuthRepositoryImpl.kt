@@ -3,6 +3,7 @@ package com.example.app.data.repository
 import com.example.app.core.result.Result
 import com.example.app.domain.model.User
 import com.example.app.domain.repository.AuthRepository
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.userProfileChangeRequest
 import com.google.firebase.firestore.FirebaseFirestore
@@ -24,11 +25,15 @@ class AuthRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore
 ) : AuthRepository {
 
+    private val logTag = "AuthRepository"
+
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
+            Log.d(logTag, "Firebase login start")
             val result = auth.signInWithEmailAndPassword(email, password).await()
             val firebaseUser = result.user
             if (firebaseUser == null) {
+                Log.w(logTag, "Firebase login failed: user is null")
                 return Result.Error("Dang nhap that bai")
             }
 
@@ -50,15 +55,18 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
+            Log.w(logTag, "Firebase login error", e)
             Result.Error(e.message ?: "Dang nhap that bai")
         }
     }
 
     override suspend fun register(name: String, email: String, password: String): Result<User> {
         return try {
+            Log.d(logTag, "Firebase register start")
             val result = auth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = result.user
             if (firebaseUser == null) {
+                Log.w(logTag, "Firebase register failed: user is null")
                 return Result.Error("Dang ky that bai")
             }
 
@@ -72,7 +80,13 @@ class AuthRepositoryImpl @Inject constructor(
                 "email" to email,
                 "createdAt" to FieldValue.serverTimestamp()
             )
-            firestore.collection("users").document(firebaseUser.uid).set(userData).await()
+            try {
+                firestore.collection("users").document(firebaseUser.uid).set(userData).await()
+                Log.d(logTag, "Firestore user saved")
+            } catch (e: Exception) {
+                // Firestore chua duoc tao se bi NOT_FOUND, khong can chan dang ky
+                Log.w(logTag, "Firestore write failed, skip", e)
+            }
 
             Result.Success(
                 User(
@@ -83,6 +97,7 @@ class AuthRepositoryImpl @Inject constructor(
                 )
             )
         } catch (e: Exception) {
+            Log.w(logTag, "Firebase register error", e)
             Result.Error(e.message ?: "Dang ky that bai")
         }
     }
