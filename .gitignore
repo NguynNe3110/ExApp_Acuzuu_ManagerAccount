@@ -42,3 +42,5 @@ Thumbs.db
 .local/
 Design-Mobile-App-Screen-home-1\android\app\google-services.json
 app/google-services.json
+
+node_modules/
